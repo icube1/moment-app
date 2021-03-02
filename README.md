@@ -2,12 +2,10 @@
 Lightweight starter, using CRA + node in typescript, communicating via websockets
 
 
-To get started -
+To get started, run the following two commands -
 
-````
-# Nodemon will run the /src/server file - hot reloading the server on any changes
-cd server && yarn debug 
+> Run the /src/server file using nodemon - hot reloading the server on any changes
+`cd server && yarn debug`
 
-# Start our create-react-app project, also supporting hot reloading
-cd frontend && yarn start
-```
+> Start our create-react-app project, also supporting hot reloading
+`cd frontend && yarn start`
