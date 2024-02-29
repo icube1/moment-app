@@ -1,54 +1,39 @@
-import express from "express";
-import * as http from "http";
-import { Server, Socket } from "socket.io";
+// server.ts
+import express from 'express';
+import http from 'http';
+import { Server, Socket } from 'socket.io';
 
-export class SocketServer {
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-  // Server
-  public static readonly PORT: number = 8080;
-  private app: express.Application;
-  private server: http.Server;
-  private io: Server;
-  private port: string | number;
+const rooms: { [key: string]: { status: string, groupNumber: number, chat: string[] } } = {};
 
-  constructor() {
-    this.app = express();
-    this.createServer();
-    this.sockets();
-  }
+io.on('connection', (socket: Socket) => {
+  socket.on('joinRoom', (roomNumber: number) => {
+    if (roomNumber >= 1 && roomNumber <= 6) {
+      socket.join(`room${roomNumber}`);
+      rooms[`room${roomNumber}`] = { status: 'waiting', groupNumber: 0, chat: [] };
+      io.to(`room${roomNumber}`).emit('roomStatus', rooms[`room${roomNumber}`]);
+    }
+  });
 
-  private createServer(): void {
-    this.server = require("http").Server(this.app);
-    this.port = process.env.PORT || 3500;
-  }
+  socket.on('changeStatus', (roomNumber: number, status: string, groupNumber: number) => {
+    if (roomNumber >= 1 && roomNumber <= 6 && ['waiting', 'ready-to-go', 'going'].includes(status)) {
+      rooms[`room${roomNumber}`] = { status, groupNumber, chat: rooms[`room${roomNumber}`].chat };
+      io.to(`room${roomNumber}`).emit('roomStatus', rooms[`room${roomNumber}`]);
+    }
+  });
 
-  private sockets(): void {
-    this.io = new Server(this.server, {
-      cors: {
-        origin: "*",
-      }
-    });
+  socket.on('chatMessage', (roomNumber: number, message: string) => {
+    if (roomNumber >= 1 && roomNumber <= 6) {
+      rooms[`room${roomNumber}`].chat.push(message);
+      io.to(`room${roomNumber}`).emit('chatMessage', rooms[`room${roomNumber}`].chat);
+    }
+  });
+});
 
-    this.io.on("connect", (socket: Socket) => {
-
-      socket.on("my_socket_event", () => {
-        console.log("My socket event")
-      });
-
-      socket.on("disconnect", () => {
-        console.log("Client Disconnected")
-      });
-
-    });
-
-    this.server.listen(this.port, () => {
-      console.log("Running server on port %s, env %s", this.port, this.app.get("env"));
-    });
-  }
-
-  public getApp(): express.Application {
-    return this.app;
-  }
-}
-
-const expressApp = new SocketServer().getApp();
+const PORT = 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
