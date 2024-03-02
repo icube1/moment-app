@@ -47,7 +47,7 @@ io.on('connection', (socket: Socket) => {
 });
 
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('ok');
 })
 
